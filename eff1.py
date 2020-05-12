@@ -9,7 +9,7 @@ from keras import optimizers
 
 ###############   defineing fucntions
 def pdata():
-    dataset = pd.read_csv('C:\\Users\\Lenovo\\Desktop\\Programming\\Sani\\final\\data.txt',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
+    dataset = pd.read_csv('.csv file location',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
     dataset = dataset.drop('Date',axis = 1)
     dataset = dataset.drop('OpenInt',axis = 1)
     dataset = dataset.drop(0,axis = 0)
