@@ -1,7 +1,7 @@
 ###############   importing libraries
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, LSTM, Input, Activation
+from keras.layers import Dense, LSTM, Input, Activation
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing
