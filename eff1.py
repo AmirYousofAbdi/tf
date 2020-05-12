@@ -1,38 +1,74 @@
+###############   importing libraries
 import keras
 from keras.models import Sequential
-from keras.layers import Dense,Activation
+from keras.layers import Dense, Dropout, LSTM, Input, Activation
 import pandas as pd
 import numpy as np
-#from keras import optimizers
 from sklearn import preprocessing
+from keras import optimizers
 
+###############   defineing fucntions
 def pdata():
-    url = 'C:\\Users\\Lenovo\\Desktop\\dtt2.csv'
-    names = ['Open','High','Low','Close','Volume']
-    dataset = pd.read_csv(url,names = names)
+    dataset = pd.read_csv('C:\\Users\\Lenovo\\Desktop\\Programming\\Sani\\final\\data.txt',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
+    dataset = dataset.drop('Date',axis = 1)
+    dataset = dataset.drop('OpenInt',axis = 1)
     dataset = dataset.drop(0,axis = 0)
+    data = dataset.copy()
     data_normaliser = preprocessing.MinMaxScaler()
-    datan = data_normaliser.fit_transform(dataset)
-    history_points = 20
-    ohlcvhn = ohlcv_histories_normalised = np.array([datan[i  : i + history_points].copy() for i in range(len(datan) - history_points)])
-    ndovn = np.array([datan[:, 0][i + history_points].copy() for i in range(len(datan) - history_points)])
-    #ndovn = np.expand_dims(ndovn, -1)
-    
-    
-    return ohlcvhn,ndovn
+    data_normalised = data_normaliser.fit_transform(dataset)
+    global history_points
+    history_points = 14
+    ohlcv_histories_normalised =      np.array([data_normalised[i  : i + history_points].copy() for i in range(len(data_normalised) - history_points)])
+    next_day_open_values_normalised = np.array([data_normalised[i + history_points][0].copy() for i in range(len(data_normalised) - history_points)])
+    next_day_open_values_normalised = np.expand_dims(next_day_open_values_normalised, -1)
+    next_day_open_values = np.array([data['Open'][i + history_points] for i in range(len(data) - history_points)])
+    next_day_open_values = np.expand_dims(next_day_open_values, -1)
+    y_normaliser = preprocessing.MinMaxScaler()
+    y_normaliser.fit( next_day_open_values ) 
+    return ohlcv_histories_normalised, next_day_open_values_normalised, next_day_open_values, y_normaliser
+def mse(real,predict):
+    length = len(predict)
+    msecalc = 0
+    for i in range(length):
+        msecalc += (real[i] - predict[i]) ** 2
+    return msecalc / length
+def dtm(ls):
+    ls2 = []
+    for i in ls:
+        ls2.append(float(i[0]))
+    return ls2
 
-ohlcvhn,ndovn = pdata()
+###############   preaparing normalised data to be traind
+ohlcv_histories, next_day_open_values, unscaled_y, y_normaliser = pdata()
 test_split = 0.9
-n = int(ohlcvhn.shape[0] * test_split)
-ohlcvhn,ndovn = ohlcvhn[:n],ndovn[:n]
-print(ohlcvhn)
+n = int(ohlcv_histories.shape[0] * test_split)
+ohlcv_train = ohlcv_histories[:n]
+y_train = next_day_open_values[:n]
+ohlcv_test = ohlcv_histories[n:]
+y_test = next_day_open_values[n:]
+unscaled_y_test = unscaled_y[n:]
+
+###############   creating the model + traing + predicting + inverse nomarliesd to real number
 model = Sequential()
-model.add(Dense(850, input_dim=n, activation='relu'))
-model.add(Dense(400, activation='relu'))
-model.add(Dense(150, activation='softmax'))
-model.add(Dense(50, activation='sigmoid'))
-model.add(Dense(1, activation='sigmoid'))
-model.add(Activation('linear'))   #khati
-#model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.add(LSTM(50))
+model.add(Dense(64))
+model.add(Activation('relu'))
+model.add(Dense(1))
+model.add(Activation('linear'))
 model.compile(optimizer='adam', loss='mse')
-model.fit(x=ohlcvhn, y=ndovn,  epochs=100, batch_size=64)
+model.fit(x=ohlcv_train, y=y_train, batch_size=32, epochs=50, shuffle=True, validation_split=0.1)
+y_test_predicted = model.predict(ohlcv_test)
+y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
+y_predicted = model.predict(ohlcv_histories)
+y_predicted = y_normaliser.inverse_transform(y_predicted)
+
+###############   plotting the results
+import matplotlib.pyplot as plt
+plt.gcf().set_size_inches(22, 15, forward=True)
+unscaled_y_test = dtm(unscaled_y_test.tolist())
+y_test_predicted = dtm(y_test_predicted.tolist())
+print(mse(unscaled_y_test,y_test_predicted))
+real = plt.plot(unscaled_y_test, label='real')
+pred = plt.plot(y_test_predicted, label='predicted')
+plt.legend(['Real', 'Prediction'])
+plt.show()
