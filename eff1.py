@@ -9,22 +9,21 @@ from keras import optimizers
 import matplotlib.pyplot as plt
 ###############   defineing fucntions
 def pdata():
-    df = pd.read_csv('.csv file path',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
-    df = df.drop('Date',axis = 1)
-    df = df.drop('OpenInt',axis = 1)
-    df = df.drop(0,axis = 0)
+    dataset = pd.read_csv('C:\\Users\\Lenovo\\Desktop\\Programming\\Sani\\final\\data.txt',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
+    dataset = dataset.drop('Date',axis = 1)
+    dataset = dataset.drop('OpenInt',axis = 1)
+    dataset = dataset.drop(0,axis = 0)
     data_normaliser = preprocessing.MinMaxScaler()
-    data_normalised = data_normaliser.fit_transform(df)
-    global history_points
+    data_normalised = data_normaliser.fit_transform(dataset)
     history_points = 14
     ohlcv_histories_normalised = np.array([data_normalised[i  : i + history_points].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.array([data_normalised[i + history_points][0].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.expand_dims(next_day_open_values_normalised, -1)
-    next_day_open_values = np.array([df['Open'][i + history_points] for i in range(len(df) - history_points)])
+    next_day_open_values = np.array([dataset['Open'][i + history_points] for i in range(len(dataset) - history_points)])
     next_day_open_values = np.expand_dims(next_day_open_values, -1)
     y_normaliser = preprocessing.MinMaxScaler()
     y_normaliser.fit( next_day_open_values ) 
-    return ohlcv_histories_normalised, next_day_open_values_normalised, next_day_open_values, y_normaliser
+    return history_points,ohlcv_histories_normalised, next_day_open_values_normalised, next_day_open_values, y_normaliser
 def mse(real,predict):
     length = len(predict)
     msecalc = 0
@@ -37,7 +36,7 @@ def n2l(ls):
         ls2.append(float(i[0]))
     return ls2
 ###############   preaparing normalised data to be traind
-ohlcv_histories, next_day_open_values, unscaled_y, y_normaliser = pdata()
+history_points,ohlcv_histories, next_day_open_values, unscaled_y, y_normaliser = pdata()
 n = int(ohlcv_histories.shape[0] * 0.9)
 ohlcv_train = ohlcv_histories[:n]
 y_train = next_day_open_values[:n]
@@ -48,7 +47,7 @@ unscaled_y_test = unscaled_y[n:]
 model = Sequential()
 model.add(LSTM(75))
 model.add(Dense(64))
-model.add(Activation('relu'))    # could be replaced by selu or tanh
+model.add(Activation('relu'))
 model.add(Dense(1))
 model.add(Activation('linear'))
 model.compile(optimizer='adam', loss='mse')
