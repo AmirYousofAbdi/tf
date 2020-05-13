@@ -49,7 +49,7 @@ unscaled_y_test = unscaled_y[n:]
 model = Sequential()
 model.add(LSTM(50))
 model.add(Dense(64))
-model.add(Activation('relu'))
+model.add(Activation('selu'))  # can be replaced by relu or tanh
 model.add(Dense(1))
 model.add(Activation('linear'))
 model.compile(optimizer='adam', loss='mse')
