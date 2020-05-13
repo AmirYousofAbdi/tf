@@ -9,7 +9,7 @@ from keras import optimizers
 import matplotlib.pyplot as plt
 ###############   defineing fucntions
 def pdata():
-    dataset = pd.read_csv('.csv file path',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
+    dataset = pd.read_csv('C:\\Users\\Lenovo\\Desktop\\Programming\\Sani\\final\\data.txt',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
     dataset = dataset.drop('Date',axis = 1)
     dataset = dataset.drop('OpenInt',axis = 1)
     dataset = dataset.drop(0,axis = 0)
@@ -57,14 +57,13 @@ model.compile(optimizer='adam', loss='mse')
 model.fit(x=ohlcv_train, y=y_train, batch_size=64, epochs=50)
 y_test_predicted = model.predict(ohlcv_test)
 y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
-y_predicted = model.predict(ohlcv_histories)
-y_predicted = y_normaliser.inverse_transform(y_predicted)
 ###############   plotting the results
-plt.gcf().set_size_inches(22, 15, forward=True)
 unscaled_y_test = dtm(unscaled_y_test.tolist())
 y_test_predicted = dtm(y_test_predicted.tolist())
 print(str("{:.2f}".format(mse(unscaled_y_test,y_test_predicted)*100))+'% Mistake in prediction')
-real = plt.plot(unscaled_y_test, label='real')
-pred = plt.plot(y_test_predicted, label='predicted')
-plt.legend(['Real', 'Prediction'])
+plt.plot(unscaled_y_test, label='real',color = 'g')
+plt.plot(y_test_predicted, label='predicted', color = 'r')
+style = plt.gcf()
+style.set_size_inches(12,10)
+plt.legend()
 plt.show()
