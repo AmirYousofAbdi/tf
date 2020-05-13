@@ -9,18 +9,18 @@ from keras import optimizers
 import matplotlib.pyplot as plt
 ###############   defineing fucntions
 def pdata():
-    dataset = pd.read_csv('.csv file path',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
-    dataset = dataset.drop('Date',axis = 1)
-    dataset = dataset.drop('OpenInt',axis = 1)
-    dataset = dataset.drop(0,axis = 0)
+    df = pd.read_csv('.csv file path',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
+    df = df.drop('Date',axis = 1)
+    df = df.drop('OpenInt',axis = 1)
+    df = df.drop(0,axis = 0)
     data_normaliser = preprocessing.MinMaxScaler()
-    data_normalised = data_normaliser.fit_transform(dataset)
+    data_normalised = data_normaliser.fit_transform(df)
     global history_points
     history_points = 14
     ohlcv_histories_normalised = np.array([data_normalised[i  : i + history_points].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.array([data_normalised[i + history_points][0].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.expand_dims(next_day_open_values_normalised, -1)
-    next_day_open_values = np.array([dataset['Open'][i + history_points] for i in range(len(dataset) - history_points)])
+    next_day_open_values = np.array([df['Open'][i + history_points] for i in range(len(df) - history_points)])
     next_day_open_values = np.expand_dims(next_day_open_values, -1)
     y_normaliser = preprocessing.MinMaxScaler()
     y_normaliser.fit( next_day_open_values ) 
