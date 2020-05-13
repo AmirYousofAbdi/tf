@@ -13,15 +13,14 @@ def pdata():
     dataset = dataset.drop('Date',axis = 1)
     dataset = dataset.drop('OpenInt',axis = 1)
     dataset = dataset.drop(0,axis = 0)
-    data = dataset.copy()
     data_normaliser = preprocessing.MinMaxScaler()
     data_normalised = data_normaliser.fit_transform(dataset)
     global history_points
     history_points = 14
-    ohlcv_histories_normalised =  np.array([data_normalised[i  : i + history_points].copy() for i in range(len(data_normalised) - history_points)])
+    ohlcv_histories_normalised = np.array([data_normalised[i  : i + history_points].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.array([data_normalised[i + history_points][0].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.expand_dims(next_day_open_values_normalised, -1)
-    next_day_open_values = np.array([data['Open'][i + history_points] for i in range(len(data) - history_points)])
+    next_day_open_values = np.array([dataset['Open'][i + history_points] for i in range(len(dataset) - history_points)])
     next_day_open_values = np.expand_dims(next_day_open_values, -1)
     y_normaliser = preprocessing.MinMaxScaler()
     y_normaliser.fit( next_day_open_values ) 
@@ -47,13 +46,13 @@ y_test = next_day_open_values[n:]
 unscaled_y_test = unscaled_y[n:]
 ###############   creating the model + traing + predicting + inverse nomarliesd to real number
 model = Sequential()
-model.add(LSTM(50))
+model.add(LSTM(75))
 model.add(Dense(64))
-model.add(Activation('selu'))  # can be replaced by relu or tanh
+model.add(Activation('relu'))    # could be replaced by selu or tanh
 model.add(Dense(1))
 model.add(Activation('linear'))
 model.compile(optimizer='adam', loss='mse')
-model.fit(x=ohlcv_train, y=y_train, batch_size=64, epochs=50)
+model.fit(x=ohlcv_train, y=y_train, batch_size=64, epochs=75)
 y_test_predicted = model.predict(ohlcv_test)
 y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
 ###############   plotting the results
@@ -62,7 +61,7 @@ y_test_predicted = n2l(y_test_predicted.tolist())
 print(str("{:.2f}".format(mse(unscaled_y_test,y_test_predicted)*100))+'% Mistake in prediction')
 plt.plot(unscaled_y_test, label='real',color = 'g')
 plt.plot(y_test_predicted, label='predicted', color = 'r')
-style = plt.gcf()
-style.set_size_inches(12,10)
+style = plt.gcf().set_size_inches(12,10)
+#style.set_size_inches(12,10)
 plt.legend()
 plt.show()
