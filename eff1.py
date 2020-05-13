@@ -6,10 +6,10 @@ import pandas as pd
 import numpy as np
 from sklearn import preprocessing
 from keras import optimizers
-
+import matplotlib.pyplot as plt
 ###############   defineing fucntions
 def pdata():
-    dataset = pd.read_csv('.csv file location',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
+    dataset = pd.read_csv('.csv file path',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
     dataset = dataset.drop('Date',axis = 1)
     dataset = dataset.drop('OpenInt',axis = 1)
     dataset = dataset.drop(0,axis = 0)
@@ -37,7 +37,6 @@ def dtm(ls):
     for i in ls:
         ls2.append(float(i[0]))
     return ls2
-
 ###############   preaparing normalised data to be traind
 ohlcv_histories, next_day_open_values, unscaled_y, y_normaliser = pdata()
 test_split = 0.9
@@ -47,7 +46,6 @@ y_train = next_day_open_values[:n]
 ohlcv_test = ohlcv_histories[n:]
 y_test = next_day_open_values[n:]
 unscaled_y_test = unscaled_y[n:]
-
 ###############   creating the model + traing + predicting + inverse nomarliesd to real number
 model = Sequential()
 model.add(LSTM(50))
@@ -56,18 +54,16 @@ model.add(Activation('relu'))
 model.add(Dense(1))
 model.add(Activation('linear'))
 model.compile(optimizer='adam', loss='mse')
-model.fit(x=ohlcv_train, y=y_train, batch_size=32, epochs=50, shuffle=True, validation_split=0.1)
+model.fit(x=ohlcv_train, y=y_train, batch_size=64, epochs=50)
 y_test_predicted = model.predict(ohlcv_test)
 y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
 y_predicted = model.predict(ohlcv_histories)
 y_predicted = y_normaliser.inverse_transform(y_predicted)
-
 ###############   plotting the results
-import matplotlib.pyplot as plt
 plt.gcf().set_size_inches(22, 15, forward=True)
 unscaled_y_test = dtm(unscaled_y_test.tolist())
 y_test_predicted = dtm(y_test_predicted.tolist())
-print(mse(unscaled_y_test,y_test_predicted))
+print(str("{:.2f}".format(mse(unscaled_y_test,y_test_predicted)*100))+'% Mistake in prediction')
 real = plt.plot(unscaled_y_test, label='real')
 pred = plt.plot(y_test_predicted, label='predicted')
 plt.legend(['Real', 'Prediction'])
