@@ -62,6 +62,5 @@ print(str("{:.2f}".format(mse(unscaled_y_test,y_test_predicted)*100))+'% Mistake
 plt.plot(unscaled_y_test, label='real',color = 'g')
 plt.plot(y_test_predicted, label='predicted', color = 'r')
 style = plt.gcf().set_size_inches(12,10)
-#style.set_size_inches(12,10)
 plt.legend()
 plt.show()
