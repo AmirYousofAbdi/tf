@@ -1,35 +1,46 @@
-###############   importing libraries
-import keras
+from easygui import multenterbox as mulent
+from easygui import msgbox 
+import pandas as pd
+import datetime
+import pandas_datareader.data as web
 from keras.models import Sequential
 from keras.layers import Dense, LSTM, Input, Activation
-import pandas as pd
 import numpy as np
 from sklearn import preprocessing
 from keras import optimizers
 import matplotlib.pyplot as plt
-###############   defineing fucntions
+def CORRECT_DATA(DATA_INF):
+    try:
+        DATA_NAME = DATA_INF[0]
+        if DATA_NAME.upper() == 'CLOSE':
+            return 'See you soon'
+        DATA_INF[1] = list(map(lambda x:int(x),(DATA_INF[1].split('/'))))
+        DATA_INF[2] = list(map(lambda x:int(x),(DATA_INF[2].split('/'))))
+        START = datetime.datetime(DATA_INF[1][0],DATA_INF[1][1],DATA_INF[1][2])
+        END = datetime.datetime(DATA_INF[2][0],DATA_INF[2][1],DATA_INF[2][2])
+        df = web.DataReader(DATA_NAME,'yahoo',START,END)
+        FILE_NAME = DATA_NAME + 'dt.csv'
+        df.to_csv(FILE_NAME)
+        return FILE_NAME
+    except:
+        msgbox('Enter again your stock information correctly!')
+        CORRECT_DATA(mulent('Enter your data information.(Date must be like:YY/MM/DD)','Stock prediction',['Stock name','Start','End']))
 def pdata():
-    dataset = pd.read_csv('C:\\Users\\Lenovo\\Desktop\\Programming\\Sani\\final\\data.txt',names = ['Date','Open','High','Low','Close','Volume','OpenInt'])
-    dataset = dataset.drop('Date',axis = 1)
-    dataset = dataset.drop('OpenInt',axis = 1)
-    dataset = dataset.drop(0,axis = 0)
+    df = pd.read_csv(CORRECT_DATA(mulent('Enter your data information.(Date must be like:YY/MM/DD)','Stock prediction',['Stock name','Start','End'])),names = ['Date','Open','High','Low','Close','Volume','Adj Close'])
+    df = df.drop('Date',axis = 1)
+    df = df.drop('Adj Close',axis = 1)
+    df = df.drop(0,axis = 0)
     data_normaliser = preprocessing.MinMaxScaler()
-    data_normalised = data_normaliser.fit_transform(dataset)
+    data_normalised = data_normaliser.fit_transform(df)
     history_points = 14
     ohlcv_histories_normalised = np.array([data_normalised[i  : i + history_points].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.array([data_normalised[i + history_points][0].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.expand_dims(next_day_open_values_normalised, -1)
-    next_day_open_values = np.array([dataset['Open'][i + history_points] for i in range(len(dataset) - history_points)])
+    next_day_open_values = np.array([df['Open'][i + history_points] for i in range(len(dataset) - history_points)])
     next_day_open_values = np.expand_dims(next_day_open_values, -1)
     y_normaliser = preprocessing.MinMaxScaler()
     y_normaliser.fit( next_day_open_values ) 
     return history_points,ohlcv_histories_normalised, next_day_open_values_normalised, next_day_open_values, y_normaliser
-def mse(real,predict):
-    length = len(predict)
-    msecalc = 0
-    for i in range(length):
-        msecalc += (real[i] - predict[i]) ** 2
-    return msecalc / length
 def n2l(ls):
     ls2 = []
     for i in ls:
@@ -57,7 +68,6 @@ y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
 ###############   plotting the results
 unscaled_y_test = n2l(unscaled_y_test.tolist())
 y_test_predicted = n2l(y_test_predicted.tolist())
-print(str("{:.2f}".format(mse(unscaled_y_test,y_test_predicted)*100))+'% Mistake in prediction')
 plt.plot(unscaled_y_test, label='real',color = 'g')
 plt.plot(y_test_predicted, label='predicted', color = 'r')
 style = plt.gcf().set_size_inches(12,10)
