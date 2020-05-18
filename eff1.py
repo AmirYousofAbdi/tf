@@ -36,7 +36,7 @@ def pdata():
     ohlcv_histories_normalised = np.array([data_normalised[i  : i + history_points].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.array([data_normalised[i + history_points][0].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.expand_dims(next_day_open_values_normalised, -1)
-    next_day_open_values = np.array([df['Open'][i + history_points] for i in range(len(dataset) - history_points)])
+    next_day_open_values = np.array([df['Open'][i + history_points] for i in range(len(df) - history_points)])
     next_day_open_values = np.expand_dims(next_day_open_values, -1)
     y_normaliser = preprocessing.MinMaxScaler()
     y_normaliser.fit( next_day_open_values ) 
